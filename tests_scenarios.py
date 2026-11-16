@@ -1,5 +1,4 @@
 from dataclasses import replace
-
 from constraints import validate_schedule
 from data import load_problem
 from main import check_student_selection
@@ -33,7 +32,7 @@ def test_validator_mendeteksi_bentrok_dosen():
     problem = load_problem()
     sch = {
         "S1": Assignment("D1", "R2", "Sen-08"),
-        "S2": Assignment("D1", "R1", "Sen-08"),
+        "S2": Assignment("D1", "R1", "Sen-08"), 
     }
     assert any("bentrok" in e for e in validate_schedule(sch, problem))
 
@@ -109,11 +108,81 @@ def test_war_adversarial_aturan_pilih_kelas():
     game, _ = _game_demo(max_pick=2)
     state = game.initial()
     langkah, state = game.successors(state)[0]
-    assert langkah not in game.legal(state, 0)
-    assert langkah not in game.legal(state, 1)
-    for sid in game.legal(state, 1):
+    assert langkah not in game.legal(state, 0)                    
+    assert langkah not in game.legal(state, 1)                    
+    for sid in game.legal(state, 1):                              
         assert game.slot[sid] not in {game.slot[s] for s in state[1]}
 
+def _krs(**kw):
+    from krs import KRS, DATASET_KRS, muat_problem_krs
+    from main import run_pipeline
+    problem = muat_problem_krs()
+    _, ranked = run_pipeline(DATASET_KRS)
+    assert ranked, "dataset_krs.json harus punya jadwal kampus valid"
+    return KRS(ranked[0].schedule, problem, **kw)
+
+def _isi_penuh(krs, code):
+    return {sid: krs.problem.rooms[krs.schedule[sid].room_id].capacity for sid in krs.by_course[code]}
+
+def test_war_kuota_penuh_ditolak():
+    problem = load_problem()
+    sch = {"S1": Assignment("D1", "R2", "Sen-08")}
+    kapasitas = problem.rooms["R2"].capacity
+    assert any("penuh" in e for e in check_student_selection(["S1"], sch, problem, enrolled={"S1": kapasitas}))
+    assert check_student_selection(["S1"], sch, problem, enrolled={"S1": kapasitas - 1}) == []
+
+def test_krs_kelas_penuh_tidak_ditawarkan():
+    base = _krs()
+    code = base.wanted[0]
+    sid = base.by_course[code][0]
+    kapasitas = base.problem.rooms[base.schedule[sid].room_id].capacity
+    krs = _krs(enrolled={sid: kapasitas})
+    assert krs.sisa_kuota(sid) == 0
+    status = {b["sid"]: b["status"] for b in krs.status_opsi({})[code]}
+    assert status[sid] == "penuh"
+    assert sid not in krs.opsi_tersisa({})[code]
+
+def test_krs_batas_sks_menolak_semua_opsi():
+    krs = _krs(max_sks=0)
+    for baris in krs.status_opsi({}).values():
+        assert all(b["status"] == "sks" for b in baris)
+
+def test_krs_bentrok_slot_terdeteksi():
+    krs = _krs()
+    sids = [s for c in krs.wanted for s in krs.by_course[c]]
+    for a in sids:
+        for b in sids:
+            if krs.kode(a) != krs.kode(b) and krs.slot(a) == krs.slot(b):
+                status = {x["sid"]: x["status"] for x in krs.status_opsi({krs.kode(a): a})[krs.kode(b)]}
+                assert status[b] == "bentrok"
+                return
+    print("   (dilewati)")
+
+def test_krs_pilihan_lanjutan_tidak_tersedia():
+    base = _krs()
+    assert len(base.wanted) >= 2
+    assert any(b["status"] == "bisa" for baris in base.status_opsi({}).values() for b in baris)
+    code = base.wanted[0]
+    krs = _krs(enrolled=_isi_penuh(base, code))
+    for metode in ("basic", "fc"):
+        assert krs.lengkapi({}, metode)[0] == []
+    status = krs.status_opsi({})
+    assert all(b["status"] == "penuh" for b in status[code])
+    for c in krs.wanted[1:]:
+        assert all(b["status"] == "buntu" for b in status[c])
+    assert all(v == [] for v in krs.opsi_tersisa({}).values())
+
+def test_krs_status_bisa_konsisten_dengan_lengkapi():
+    krs = _krs()
+    for code, baris in krs.status_opsi({}).items():
+        for b in baris:
+            ada = bool(krs.lengkapi({code: b["sid"]}, "fc", limit=1)[0])
+            assert ada == (b["status"] == "bisa")
+
+def test_krs_basic_dan_fc_menghasilkan_himpunan_jadwal_sama():
+    krs = _krs()
+    kunci = lambda sol: sorted(tuple(sorted(p.items())) for p in sol)
+    assert kunci(krs.lengkapi({}, "basic")[0]) == kunci(krs.lengkapi({}, "fc")[0])
 
 if __name__ == "__main__":
     for name, fn in list(globals().items()):

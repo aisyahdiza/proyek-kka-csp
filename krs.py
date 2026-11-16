@@ -1,6 +1,8 @@
 from pathlib import Path
 
+from constraints import overlap
 from data import load_problem
+from models import HARI
 
 DATASET_KRS = Path(__file__).resolve().parent / "dataset_krs.json"
 
@@ -56,8 +58,9 @@ class KRS:
     def deskripsi(self, sid):
         a = self.schedule[sid]
         sec = self.problem.sections[sid]
+        sl = self.problem.slots[a.slot_id]
         return (f"{sec.course} | {self.problem.lecturers[a.lecturer_id].name} | "
-                f"{a.slot_id} | {self.problem.rooms[a.room_id].name}")
+                f"{sl.day} {sl.start:02d}.00-{sl.end:02d}.00 | {self.problem.rooms[a.room_id].name}")
 
     def sisa_kuota(self, sid):
         kapasitas = self.problem.rooms[self.schedule[sid].room_id].capacity
@@ -70,7 +73,7 @@ class KRS:
         for code, other in assign.items():
             if code == self.kode(sid):
                 continue
-            if self.slot(other) == self.slot(sid):
+            if overlap(self.problem, self.slot(other), self.slot(sid)):
                 return "bentrok", f"bentrok dengan {self.problem.sections[other].course} ({self.slot(sid)})"
             total += self.problem.sections[other].sks
         if total > self.max_sks:
@@ -169,22 +172,18 @@ class KRS:
         per_hari = {}
         for s in sids:
             sl = slots[self.slot(s)]
-            per_hari.setdefault(sl.day, []).append(sl.start)
+            per_hari.setdefault(sl.day, []).append((sl.start, sl.end))
 
-        urut = {}
-        for sl in slots.values():
-            urut.setdefault(sl.day, []).append(sl.start)
-        jeda = 0
-        for day, jam in per_hari.items():
-            semua = sorted(urut[day])
-            idx = sorted(semua.index(j) for j in jam)
-            jeda += (idx[-1] - idx[0] + 1) - len(idx)
+        jeda = 0  # total jam kosong di antara kelas pada hari yang sama
+        for jam in per_hari.values():
+            jam.sort()
+            jeda += sum(max(0, b[0] - a[1]) for a, b in zip(jam, jam[1:]))
 
         hari_total = len({sl.day for sl in slots.values()})
         komp = {
             "jeda_sedikit": max(0.0, 1 - jeda / n),
             "hari_sedikit": 1 - (len(per_hari) - 1) / max(1, hari_total - 1),
-            "hindari_sore": 1 - sum(1 for s in sids if slots[self.slot(s)].start >= 16) / n,
+            "hindari_sore": 1 - sum(1 for s in sids if slots[self.slot(s)].end > 15) / n,
         }
         fav = set(preferensi.get("dosen_favorit", ()))
         if fav:
@@ -218,7 +217,9 @@ class KRS:
 
     def tampilkan(self, pilihan):
         slots = self.problem.slots
-        urut = sorted(pilihan.values(), key=lambda s: (slots[self.slot(s)].day, slots[self.slot(s)].start))
+        urut = sorted(pilihan.values(), key=lambda s: (HARI.index(slots[self.slot(s)].day)
+                                                       if slots[self.slot(s)].day in HARI else 9,
+                                                       slots[self.slot(s)].start))
         return "\n".join(self.deskripsi(s) for s in urut)
 
 

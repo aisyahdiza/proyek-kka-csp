@@ -1,6 +1,8 @@
 from dataclasses import dataclass
 from typing import NamedTuple
 
+HARI = ["Sen", "Sel", "Rab", "Kam", "Jum"]
+
 
 class Assignment(NamedTuple):
     lecturer_id: str
@@ -14,7 +16,8 @@ class Lecturer:
     name: str
     available_slots: frozenset
     preferred_slots: frozenset
-    max_load: int                
+    max_load: int
+    max_per_day: int = 99        
 
 
 @dataclass(frozen=True)
@@ -47,4 +50,5 @@ class Problem:
     lecturers: dict
     rooms: dict  
     slots: dict  
-    sections: dict 
+    sections: dict
+    match_duration: bool = False  

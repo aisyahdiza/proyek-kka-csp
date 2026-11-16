@@ -184,6 +184,52 @@ def test_krs_basic_dan_fc_menghasilkan_himpunan_jadwal_sama():
     kunci = lambda sol: sorted(tuple(sorted(p.items())) for p in sol)
     assert kunci(krs.lengkapi({}, "basic")[0]) == kunci(krs.lengkapi({}, "fc")[0])
 
+def _kampus():
+    from kampus import buat_jadwal_tetap, buat_problem
+    problem = buat_problem()
+    jadwal = buat_jadwal_tetap(problem)
+    assert jadwal, "CSP kampus harus menemukan jadwal tetap"
+    return problem, jadwal
+
+def test_kampus_jadwal_tetap_valid_dan_lengkap():
+    problem, jadwal = _kampus()
+    assert len(jadwal) == len(problem.sections) == 21
+    assert validate_schedule(jadwal, problem) == []
+    for sid, a in jadwal.items():
+        sl = problem.slots[a.slot_id]
+        assert sl.end - sl.start == problem.sections[sid].sks
+        assert 7 <= sl.start and sl.end <= 17
+
+def test_kampus_dosen_maks_4_kelas_per_hari():
+    problem, jadwal = _kampus()
+    hitung = {}
+    for a in jadwal.values():
+        kunci = (a.lecturer_id, problem.slots[a.slot_id].day)
+        hitung[kunci] = hitung.get(kunci, 0) + 1
+    assert max(hitung.values()) <= 4
+
+def test_bentrok_jam_tumpang_tindih_terdeteksi():
+    problem, _ = _kampus()
+    sch = {"TG-A": Assignment("D3", "R101", "Sen-07-3"),
+           "MD-A": Assignment("D3", "R102", "Sen-09-3")}
+    assert any("dosen" in e for e in validate_schedule(sch, problem))
+
+def test_kampus_ai_ranking_lengkapi_pilihan_mahasiswa():
+    from krs import KRS
+    problem, jadwal = _kampus()
+    krs = KRS(jadwal, problem)
+    picks = {"KKA": "KKA-A", "JK": "JK-B", "PW": "PW-C"}
+    hasil = krs.rekomendasi(picks)
+    assert hasil
+    for r in hasil:
+        p = r["pilihan"]
+        assert set(p) == set(krs.wanted)
+        assert all(p[c] == s for c, s in picks.items())
+        for c1 in p:
+            for c2 in p:
+                if c1 < c2:
+                    assert krs._cek(p[c1], {c2: p[c2]}) is None
+
 if __name__ == "__main__":
     for name, fn in list(globals().items()):
         if name.startswith("test_"):

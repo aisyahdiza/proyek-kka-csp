@@ -1,5 +1,7 @@
 import random
 
+from constraints import overlap
+
 INF = float("inf")
 
 
@@ -9,7 +11,8 @@ def buat_preferensi(section_ids, seed):
 
 
 class WarGame:
-    def __init__(self, schedule, pref_a, pref_b, seats=None, max_pick=3):
+    def __init__(self, schedule, pref_a, pref_b, seats=None, max_pick=3, problem=None):
+        self.problem = problem  
         self.ids = sorted(schedule)
         self.index = {sid: i for i, sid in enumerate(self.ids)}
         self.slot = {sid: schedule[sid].slot_id for sid in self.ids}
@@ -24,11 +27,16 @@ class WarGame:
         picks, seats = state[player], state[2]
         if len(picks) >= self.max_pick:
             return []
-        used_slots = {self.slot[s] for s in picks}
         moves = [sid for sid in self.ids
-                 if seats[self.index[sid]] > 0 and sid not in picks and self.slot[sid] not in used_slots]
+                 if seats[self.index[sid]] > 0 and sid not in picks
+                 and not any(self._bentrok(sid, p) for p in picks)]
         moves.sort(key=lambda s: (-self.pref[player][s], s))
         return moves
+
+    def _bentrok(self, a, b):
+        if self.problem is None:
+            return self.slot[a] == self.slot[b]
+        return overlap(self.problem, self.slot[a], self.slot[b])
 
     def apply(self, state, sid):
         player = state[3]
@@ -125,8 +133,8 @@ def bandingkan(game):
     }
 
 
-def jalankan_skenario(schedule, seed_a=1, seed_b=2, max_pick=3, kuota=1):
+def jalankan_skenario(schedule, seed_a=1, seed_b=2, max_pick=3, kuota=1, problem=None):
     ids = list(schedule)
     game = WarGame(schedule, buat_preferensi(ids, seed_a), buat_preferensi(ids, seed_b),
-                   seats={sid: kuota for sid in ids}, max_pick=max_pick)
+                   seats={sid: kuota for sid in ids}, max_pick=max_pick, problem=problem)
     return game, bandingkan(game)

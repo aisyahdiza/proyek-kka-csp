@@ -1,6 +1,3 @@
-"""benchmark.py - bandingkan Solver A (backtracking biasa) vs Solver B (MRV + forward checking)
-pada dataset small/medium/large.
-"""
 import csv
 import random
 import statistics
@@ -68,7 +65,6 @@ def hitung_semua_solusi(problem, mrv, fc):
 def cek_kesetaraan():
     from data import load_problem as lp
     import gen_dataset
-    # tes singkat 4 kelas
     gen_dataset.UKURAN["mini"] = (4, 3, 2, 2, 1)
     import json
     tmp = FOLDER / "_mini.json"

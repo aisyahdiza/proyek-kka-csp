@@ -1,4 +1,3 @@
-"""data.py - memuat dataset ke objek problem."""
 import json
 from pathlib import Path
 

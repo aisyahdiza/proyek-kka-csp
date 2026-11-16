@@ -1,22 +1,3 @@
-"""krs.py - Tahap 2: mahasiswa memilih kelas, sistem langsung menyaring sisanya (dipegang Orang 3 + 4).
-
-KRS = Kartu Rencana Studi. Tahap 1 (kampus) menyusun jadwal lewat solver CSP. Tahap 2 (modul ini):
-mahasiswa memilih section (dosen + jam) satu per satu dari jadwal kampus itu.
-
-Model CSP sisi mahasiswa:
-  variabel   = mata kuliah yang ingin diambil (kode mata kuliah)
-  domain     = section mata kuliah itu pada jadwal kampus (tiap section punya dosen dan slot)
-  constraint = (1) dua kelas pilihan tidak boleh di slot yang sama
-               (2) kuota kelas belum penuh
-               (3) total SKS tidak melebihi batas
-
-Mengklik satu section = menetapkan satu variabel. Menyaring pilihan lain = forward checking.
-Untuk mencari "jadwal lengkap yang masih mungkin" dipakai dua metode yang bisa dibandingkan,
-sama seperti di solver.py:
-  method="basic" : backtracking biasa (urutan mata kuliah tetap, cek saat nilai dicoba)
-  method="fc"    : backtracking + MRV + forward checking
-Keduanya harus menghasilkan himpunan jadwal yang sama (ada tesnya).
-"""
 from pathlib import Path
 
 from data import load_problem
@@ -24,11 +5,11 @@ from data import load_problem
 DATASET_KRS = Path(__file__).resolve().parent / "dataset_krs.json"
 
 BOBOT = {
-    "dosen_favorit": 0.40,   # kelas diajar dosen favorit mahasiswa
-    "jeda_sedikit": 0.25,    # jeda kosong antar kelas di hari yang sama sedikit
-    "hari_sedikit": 0.20,    # kuliah terkumpul di sedikit hari
-    "hindari_sore": 0.15,    # tidak ada kelas mulai jam 16 atau lebih
-    "hari_kosong": 0.25,     # hari yang diminta kosong benar-benar kosong (hanya jika diminta)
+    "dosen_favorit": 0.40,
+    "jeda_sedikit": 0.25,
+    "hari_sedikit": 0.20,
+    "hindari_sore": 0.15,
+    "hari_kosong": 0.25, 
 }
 
 LABEL = {
@@ -41,22 +22,18 @@ LABEL = {
 
 
 def muat_problem_krs():
-    """Dataset dengan beberapa section per mata kuliah (dataset_krs.json)."""
     return load_problem(DATASET_KRS)
 
 
 class KRS:
     def __init__(self, schedule, problem, wanted=None, max_sks=24, enrolled=None):
-        """schedule: dict section_id -> Assignment (jadwal kampus dari solver).
-        wanted: daftar kode mata kuliah yang ingin diambil (default: semua).
-        enrolled: dict section_id -> jumlah mahasiswa yang sudah terdaftar (untuk kuota)."""
         self.schedule = schedule
         self.problem = problem
         self.max_sks = max_sks
         self.enrolled = enrolled or {}
 
         self.by_course = {}
-        for sid in problem.sections:                     # urutan dataset
+        for sid in problem.sections:
             if sid in schedule:
                 self.by_course.setdefault(self.kode(sid), []).append(sid)
         self.wanted = tuple(wanted) if wanted else tuple(self.by_course)
@@ -64,13 +41,11 @@ class KRS:
         if unknown:
             raise ValueError(f"Mata kuliah tidak ada di jadwal: {unknown}")
 
-    # ------------------------------------------------------------------ info dasar
     def kode(self, sid):
         sec = self.problem.sections[sid]
         return sec.course_code or sec.course
 
     def nama_matkul(self, code):
-        """Nama mata kuliah tanpa huruf section, misal 'Basis Data'."""
         nama = self.problem.sections[self.by_course[code][0]].course
         kepala, _, ekor = nama.rpartition(" ")
         return kepala if kepala and len(ekor) == 1 and ekor.isupper() else nama
@@ -88,10 +63,7 @@ class KRS:
         kapasitas = self.problem.rooms[self.schedule[sid].room_id].capacity
         return kapasitas - self.enrolled.get(sid, 0)
 
-    # ------------------------------------------------------------------ constraint
     def _cek(self, sid, assign):
-        """Cek `sid` terhadap pilihan yang sudah ada (`assign`: kode -> sid).
-        Mengembalikan None kalau boleh, atau (status, alasan) kalau tidak."""
         if self.sisa_kuota(sid) <= 0:
             return "penuh", "kuota kelas sudah penuh"
         total = self.problem.sections[sid].sks
@@ -106,18 +78,13 @@ class KRS:
         return None
 
     def domain_awal(self):
-        """Domain tiap mata kuliah sebelum ada yang dipilih (hanya yang kuotanya masih ada)."""
         return {c: [s for s in self.by_course[c] if self.sisa_kuota(s) > 0] for c in self.wanted}
 
-    # ------------------------------------------------------------------ mencari jadwal lengkap
     def lengkapi(self, picks, method="fc", limit=None):
-        """Cari SEMUA jadwal lengkap (satu section per mata kuliah) yang konsisten dengan `picks`
-        (dict kode -> section_id). Mengembalikan (daftar jadwal, statistik)."""
         use_fc = method == "fc"
         stats = {"nodes": 0, "checks": 0, "backtracks": 0}
         solutions = []
 
-        # pilihan yang sudah ada harus saling konsisten
         assign = {}
         for code, sid in picks.items():
             if self._cek(sid, assign) is not None:
@@ -135,7 +102,7 @@ class KRS:
                 return
             code = min(doms, key=lambda c: len(doms[c])) if use_fc else next(iter(doms))
             for sid in doms[code]:
-                if not use_fc:                      # basic: cek saat nilai dicoba
+                if not use_fc: 
                     stats["checks"] += 1
                     if self._cek(sid, assign) is not None:
                         stats["backtracks"] += 1
@@ -143,7 +110,7 @@ class KRS:
                 assign[code] = sid
                 rest = {c: d for c, d in doms.items() if c != code}
                 ok = True
-                if use_fc:                          # fc: saring domain mata kuliah lain
+                if use_fc: 
                     filtered = {}
                     for other, d in rest.items():
                         kept = []
@@ -162,7 +129,7 @@ class KRS:
                     stats["backtracks"] += 1
                 del assign[code]
 
-        if use_fc:                                  # saring domain awal terhadap pilihan yang ada
+        if use_fc: 
             pre = {}
             for code, d in domains.items():
                 kept = [s for s in d if self._cek(s, assign) is None]
@@ -173,15 +140,7 @@ class KRS:
         rec(domains)
         return solutions, stats
 
-    # ------------------------------------------------------------------ status opsi (inti ide baru)
     def status_opsi(self, picks, method="fc"):
-        """Untuk tiap mata kuliah, status tiap section-nya diberi pilihan `picks`.
-
-        status: "bisa"   = boleh dipilih dan masih ada jalan menyelesaikan semua mata kuliah
-                "bentrok", "penuh", "sks" = langsung ditolak
-                "buntu"  = lolos cek langsung, tetapi kalau dipilih ada mata kuliah lain yang tidak
-                           mungkin lagi diambil (tidak ada jadwal lengkap)
-        Hasil: {kode: [{"sid", "status", "alasan"}, ...]}"""
         hasil = {}
         for code in self.wanted:
             lain = {c: s for c, s in picks.items() if c != code}
@@ -199,12 +158,10 @@ class KRS:
         return hasil
 
     def opsi_tersisa(self, picks, method="fc"):
-        """Hanya section yang masih bisa dipilih, untuk mata kuliah yang belum dipilih."""
         st = self.status_opsi(picks, method)
         return {c: [b["sid"] for b in st[c] if b["status"] == "bisa"]
                 for c in self.wanted if c not in picks}
 
-    # ------------------------------------------------------------------ AI ranking untuk mahasiswa
     def _komponen(self, pilihan, preferensi):
         sids = list(pilihan.values())
         n = len(sids)
@@ -238,16 +195,12 @@ class KRS:
         return komp
 
     def skor(self, pilihan, preferensi=None):
-        """Skor 0..100 untuk satu jadwal lengkap. Komponen yang tidak diminta dibuang lalu
-        bobot sisanya dinormalkan. Mengembalikan (skor, rincian)."""
         komp = self._komponen(pilihan, preferensi or {})
         total_bobot = sum(BOBOT[k] for k in komp)
         nilai = 100 * sum(BOBOT[k] * v for k, v in komp.items()) / total_bobot
         return round(nilai, 2), komp
 
     def rekomendasi(self, picks, preferensi=None, top_k=3, method="fc"):
-        """Jadwal lengkap yang masih mungkin, diurutkan dari skor tertinggi.
-        Mengembalikan list dict: {"skor", "pilihan", "rincian"}."""
         jadwal, _ = self.lengkapi(picks, method)
         hasil = []
         for p in jadwal:
@@ -264,7 +217,6 @@ class KRS:
                 f"Titik terlemah: {LABEL[terlemah].replace('kelasnya ', '')} ({komp[terlemah]:.0%}).")
 
     def tampilkan(self, pilihan):
-        """Jadwal lengkap sebagai teks, urut hari dan jam."""
         slots = self.problem.slots
         urut = sorted(pilihan.values(), key=lambda s: (slots[self.slot(s)].day, slots[self.slot(s)].start))
         return "\n".join(self.deskripsi(s) for s in urut)

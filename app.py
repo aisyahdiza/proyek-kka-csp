@@ -1,8 +1,3 @@
-"""app.py - antarmuka Streamlit (dipegang Orang 4).
-
-Jalankan lokal :  streamlit run app.py
-Deploy         :  lihat README.md (Streamlit Community Cloud, file utama = app.py)
-"""
 import streamlit as st
 
 from adversarial import jalankan_skenario
@@ -30,7 +25,6 @@ if not ranked:
 
 tab_jadwal, tab_adv = st.tabs(["Jadwal dan war mahasiswa", "Skenario adversarial"])
 
-# ---------------------------------------------------------------- tab 1
 with tab_jadwal:
     st.subheader("Opsi jadwal terbaik")
     pilihan = st.selectbox("Pilih opsi", range(len(ranked)),
@@ -52,7 +46,6 @@ with tab_jadwal:
         else:
             st.success("Pilihan kelas berhasil disimpan!")
 
-# ---------------------------------------------------------------- tab 2
 with tab_adv:
     st.subheader("Dua mahasiswa berebut kelas (minimax + alpha-beta)")
     st.write("Mahasiswa A dan B bergiliran memilih kelas dari jadwal peringkat 1. "

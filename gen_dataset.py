@@ -1,5 +1,3 @@
-"""gen_dataset.py - pembuat dataset_small/medium/large.json.
-"""
 import json
 import random
 from pathlib import Path
@@ -12,7 +10,6 @@ NAMA_MK = ["Basis Data", "Algoritma", "Jaringan Komputer", "Kecerdasan Buatan", 
            "Teori Graf", "Sistem Operasi", "Struktur Data", "Rekayasa Perangkat Lunak",
            "Matematika Diskrit", "Keamanan Informasi", "Pemrograman Mobile"]
 
-# nama: (jumlah kelas, jumlah dosen, jumlah ruang, jumlah kelompok mahasiswa, slack max_load)
 UKURAN = {
     "small": (8, 5, 4, 3, 1),
     "medium": (30, 8, 6, 6, 1),

@@ -1,15 +1,3 @@
-"""compare.py - perbandingan algoritma/pendekatan CSP (dipegang Orang 1 + Orang 5).
-
-Jalankan:  python compare.py
-
-Membandingkan 4 varian solver:  BT biasa | BT + MRV | BT + FC | BT + MRV + FC
-pada tiga skenario. Tiap soal dijalankan dengan urutan nilai domain yang sama untuk
-semua varian (seed sama), jadi perbedaannya murni karena tekniknya.
-
-Catatan penting untuk laporan: dataset proyek (8 kelas) terlalu longgar sehingga semua varian
-sama-sama langsung menemukan solusi. Perbedaan baru terlihat pada soal yang lebih ketat,
-karena itu ada generator soal acak di bawah (buat_soal_acak).
-"""
 import random
 import statistics
 
@@ -24,11 +12,10 @@ VARIAN = [
     ("BT + MRV + FC", True, True),
 ]
 
-MAX_NODES = 20000  # batas node per pencarian; kalau tercapai dihitung "gagal/batas"
+MAX_NODES = 20000
 
 
 def buat_soal_acak(n_kelas, n_slot, n_ruang, n_dosen, p_tersedia, seed):
-    """Soal penjadwalan acak. Makin sedikit slot/ruang dibanding jumlah kelas, makin ketat."""
     r = random.Random(seed)
     slots = {f"T{i}": Slot(f"T{i}", "Sen", 8 + i, 9 + i) for i in range(n_slot)}
     rooms = {f"R{i}": Room(f"R{i}", f"R{i}", r.choice([30, 40, 50, 70])) for i in range(n_ruang)}
@@ -44,8 +31,6 @@ def buat_soal_acak(n_kelas, n_slot, n_ruang, n_dosen, p_tersedia, seed):
 
 
 def kumpulkan_soal_punya_solusi(jumlah, **cfg):
-    """Ambil `jumlah` soal acak yang TERBUKTI punya solusi (dicek dengan MRV+FC, batas node besar).
-    Soal tanpa solusi dibuang supaya perbandingan adil."""
     soal, seed = [], 0
     while len(soal) < jumlah and seed < 2000:
         p = buat_soal_acak(seed=seed, **cfg)
@@ -57,7 +42,6 @@ def kumpulkan_soal_punya_solusi(jumlah, **cfg):
 
 
 def benchmark(daftar_soal):
-    """daftar_soal = list (seed, Problem). Mengembalikan satu baris hasil per varian."""
     rows = []
     for nama, mrv, fc in VARIAN:
         hasil = []

@@ -1,7 +1,3 @@
-"""main.py - alur utama + logika "war" mahasiswa (dipegang Orang 4).
-
-Jalankan:  python main.py
-"""
 from constraints import validate_schedule
 from data import load_problem
 from ranking import explain, rank
@@ -9,7 +5,6 @@ from solver import solve_all
 
 
 def run_pipeline(path=None, limit=30, top_k=5):
-    """Dataset -> solver CSP -> ranking. Mengembalikan (problem, list Ranked)."""
     problem = load_problem(path)
     schedules = solve_all(problem, limit=limit)
     return problem, rank(schedules, problem, top_k=top_k)
@@ -26,12 +21,6 @@ def format_schedule(schedule, problem):
 
 
 def check_student_selection(selected_ids, schedule, problem, max_sks=24, enrolled=None):
-    """Aturan "war" sisi mahasiswa. Mengembalikan list pesan error (kosong = pilihan valid).
-
-    - tidak boleh dua kelas di slot yang sama
-    - total SKS tidak boleh melebihi max_sks
-    - kuota kelas (kapasitas ruang) tidak boleh penuh; `enrolled` = dict section_id -> jumlah terdaftar
-    """
     enrolled = enrolled or {}
     errors = []
 
@@ -71,7 +60,6 @@ if __name__ == "__main__":
         masalah = check_student_selection(pilihan, best, problem)
         print("Pilihan valid" if not masalah else "\n".join(masalah))
 
-        # Skenario tambahan: war sebagai permainan dua pemain (adversarial search)
         from adversarial import jalankan_skenario
         _, h = jalankan_skenario(best)
         print("\n--- Skenario adversarial: dua mahasiswa berebut kelas ---")

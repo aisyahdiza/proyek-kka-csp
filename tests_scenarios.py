@@ -1,8 +1,3 @@
-"""tests_scenarios.py - skenario uji (dipegang Orang 5).
-
-Jalankan:  python tests_scenarios.py     (atau: pytest tests_scenarios.py)
-Tambahkan skenario baru di bawah dan catat hasilnya untuk laporan/PPT.
-"""
 from dataclasses import replace
 
 from constraints import validate_schedule
@@ -38,7 +33,7 @@ def test_validator_mendeteksi_bentrok_dosen():
     problem = load_problem()
     sch = {
         "S1": Assignment("D1", "R2", "Sen-08"),
-        "S2": Assignment("D1", "R1", "Sen-08"),   # dosen sama, slot sama
+        "S2": Assignment("D1", "R1", "Sen-08"),
     }
     assert any("bentrok" in e for e in validate_schedule(sch, problem))
 
@@ -72,7 +67,6 @@ def test_semua_varian_solver_menghasilkan_jadwal_valid():
 
 def test_bentrok_kelompok_mahasiswa_terdeteksi():
     problem = load_problem()
-    # S1 dan S3 sama-sama kelompok TI-1A, dosen dan ruang berbeda tetapi slot sama
     sch = {
         "S1": Assignment("D1", "R2", "Sen-08"),
         "S3": Assignment("D3", "R3", "Sen-08"),
@@ -107,9 +101,7 @@ def test_alphabeta_nilai_sama_dengan_minimax_tapi_lebih_sedikit_node():
 def test_minimax_menjamin_hasil_minimal_nilai_optimal():
     _, h = _game_demo()
     v = h["nilai_optimal"]
-    # lawan greedy (tidak optimal) -> A dengan minimax tidak mungkin lebih buruk dari nilai optimal
     assert h["kombinasi"][("minimax", "greedy")]["nilai"] >= v
-    # B dengan minimax melawan A greedy -> nilai (A - B) tidak mungkin lebih besar dari nilai optimal
     assert h["kombinasi"][("greedy", "minimax")]["nilai"] <= v
 
 
@@ -117,9 +109,9 @@ def test_war_adversarial_aturan_pilih_kelas():
     game, _ = _game_demo(max_pick=2)
     state = game.initial()
     langkah, state = game.successors(state)[0]
-    assert langkah not in game.legal(state, 0)                    # kelas yang sudah dipilih tidak bisa lagi
-    assert langkah not in game.legal(state, 1)                    # kuota 1 sudah habis untuk lawan
-    for sid in game.legal(state, 1):                              # kelas sisa tidak boleh sama slot dengan pilihan sendiri
+    assert langkah not in game.legal(state, 0)
+    assert langkah not in game.legal(state, 1)
+    for sid in game.legal(state, 1):
         assert game.slot[sid] not in {game.slot[s] for s in state[1]}
 
 

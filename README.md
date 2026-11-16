@@ -18,27 +18,27 @@ Tugas kelompok 5 orang, deadline 3 November 2026.
 
 ## Struktur file
 
-| File | Isi | Pemilik |
-| --- | --- | --- |
-| `models.py` | Struktur data (Section, Lecturer, Room, Slot, Assignment, Problem) | Orang 1 |
-| `solver.py` | Solver CSP, 4 varian lewat `solve_with_stats(problem, use_mrv, use_fc)` | Orang 1 |
-| `compare.py` | Benchmark perbandingan 4 varian solver | Orang 1 + 5 |
-| `dataset.json`, `data.py` | Data dummy dan pemuatnya | Orang 2 |
-| `constraints.py` | Semua hard constraint dan validator jadwal | Orang 2 |
-| `ranking.py` | Scoring dan pengurutan jadwal (AI ranking) | Orang 3 |
-| `adversarial.py` | Minimax, alpha-beta, greedy untuk skenario war | Orang 3 |
-| `main.py` | Alur utama (CLI) dan aturan war mahasiswa | Orang 4 |
-| `app.py` | UI Streamlit | Orang 4 |
-| `tests_scenarios.py` | Skenario uji | Orang 5 |
+| File | Isi |
+| --- | --- | 
+| `models.py` | Struktur data (Section, Lecturer, Room, Slot, Assignment, Problem) |
+| `solver.py` | Solver CSP, 4 varian lewat `solve_with_stats(problem, use_mrv, use_fc)` |
+| `compare.py` | Benchmark perbandingan 4 varian solver |
+| `dataset.json`, `data.py` | Data dummy dan pemuatnya |
+| `constraints.py` | Semua hard constraint dan validator jadwal |
+| `ranking.py` | Scoring dan pengurutan jadwal (AI ranking) |
+| `adversarial.py` | Minimax, alpha-beta, greedy untuk skenario war |
+| `main.py` | Alur utama (CLI) dan aturan war mahasiswa |
+| `app.py` | UI Streamlit |
+| `tests_scenarios.py` | Skenario uji |
 
 ## Cara menjalankan
 
 ```
 pip install -r requirements.txt
-python main.py                # alur lengkap di terminal
-python tests_scenarios.py     # semua tes (harus semua OK)
-python compare.py             # benchmark algoritma, sekitar 1 menit
-streamlit run app.py          # buka web di browser
+python main.py                
+python tests_scenarios.py     
+python compare.py        
+streamlit run app.py    
 ```
 
 ## Deploy ke web (Streamlit Community Cloud)

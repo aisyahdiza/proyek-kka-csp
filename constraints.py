@@ -1,5 +1,3 @@
-### Hard constraint = aturan yang tidak boleh dilanggar. Jika dilanggar, jadwal tidak valid.
-
 from models import Assignment
 
 def build_domain(section, problem):
@@ -15,7 +13,7 @@ def build_domain(section, problem):
     return domain
 
 def is_consistent(section_id, assignment, partial, problem):
-    load = 1  # kelas ini sendiri
+    load = 1 
     group = problem.sections[section_id].group
     for other_id, other in partial.items():
         if other_id == section_id:

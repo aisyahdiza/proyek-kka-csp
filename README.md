@@ -71,7 +71,7 @@ streamlit run app.py          # aplikasi web lengkap
 python tests_scenarios.py     # jalankan semua tes
 ```
 
-Atau langsung membukanya versi online: https://kkaminiproject-jrqusj4gsebacjzctffu6k.streamlit.app/
+Atau langsung membukanya versi online: https://myitssched.streamlit.app/
 
 
 Aplikasi ini memiliki dua tab yang ditawarkan, yang pertama **Data dan jadwal CSP** untuk mendapatkan jadwal tetap dan yang kedua **Pilih kelas dan AI ranking** untuk memilih maksimal 3 kelas, isi preferensi, lalu cari jadwal terbaik. Tombol "Generate ulang jadwal CSP" membuat jadwal tetap yang baru.

@@ -5,7 +5,7 @@ from kampus import (DOSEN, MAKS_KELAS_PER_HARI, MATKUL, buat_jadwal_tetap, buat_
 from krs import KRS
 from models import HARI
 
-MAKS_PILIHAN = 3 
+MAKS_PILIHAN = 3          
 AI = "(auto fill)"
 
 st.set_page_config(page_title="Jadwal Kuliah CSP", layout="wide")
@@ -53,20 +53,30 @@ with tab_data:
 with tab_pilih:
     st.subheader(f"Pilih maksimal {MAKS_PILIHAN} kelas yang kamu mau")
     st.write("Mata kuliah yang tidak kamu pilih akan dicarikan kelasnya oleh AI ranking, "
-             "sehingga jadwal akhir lengkap dan tidak bentrok.")
+            "sehingga jadwal akhir lengkap dan tidak bentrok.")
 
     picks = {}
+    def sudah_dipilih(code):
+        nilai = st.session_state.get(f"pilih_{code}", AI)
+        return nilai != AI and nilai in krs.by_course[code]
+
+    jumlah_dipilih = sum(1 for c in krs.wanted if sudah_dipilih(c))
+    if jumlah_dipilih >= MAKS_PILIHAN:
+        st.info(f"Kamu sudah memilih {MAKS_PILIHAN} kelas. Kembalikan salah satu ke auto fill kalau ingin memilih mata kuliah lain.")
+
     cols = st.columns(2)
     for i, code in enumerate(krs.wanted):
-        pilihan = cols[i % 2].selectbox(krs.nama_matkul(code), [AI] + krs.by_course[code],
-                                        format_func=lambda s: s if s == AI else krs.deskripsi(s),
-                                        key=f"pilih_{code}")
+        terkunci = jumlah_dipilih >= MAKS_PILIHAN and not sudah_dipilih(code)
+        pilihan = cols[i % 2].selectbox(
+            krs.nama_matkul(code), [AI] + krs.by_course[code],
+            format_func=lambda s: s if s == AI else krs.deskripsi(s),
+            key=f"pilih_{code}", disabled=terkunci)
         if pilihan != AI:
             picks[code] = pilihan
 
     with st.expander("Preferensi tambahan (opsional)"):
         favorit = st.multiselect("Dosen favorit", [d for d, _, _ in DOSEN],
-                                 format_func=lambda d: problem.lecturers[d].name)
+                                format_func=lambda d: problem.lecturers[d].name)
         kosong = st.selectbox("Hari yang ingin kosong", ["(bebas)"] + HARI)
     preferensi = {}
     if favorit:

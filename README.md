@@ -1,6 +1,6 @@
 # Penyusun Jadwal Kuliah dengan CSP dan AI Ranking
 
-Program ini menyusun jadwal kuliah satu kampus, lalu membantu mahasiswa menyusun jadwal pribadinya tanpa bentrok.
+Program ini menyusun jadwal kuliah suatu kampus, lalu membantu mahasiswa menyusun jadwal pribadinya tanpa bentrok.
 
 ## Cara kerja
 
@@ -55,12 +55,12 @@ Contoh: mahasiswa memilih KKA A, Jaringan Komputer B, dan Pemrograman Web C. Pro
 
 ```
 pip install -r requirements.txt
-python kampus.py              # lihat jadwal tetap hasil CSP di terminal
-streamlit run app.py          # aplikasi web lengkap
-python tests_scenarios.py     # jalankan semua tes
+python kampus.py              
+streamlit run app.py          
+python tests_scenarios.py
 ```
 
-Aplikasi web punya tiga tab: data dan jadwal CSP, pilih kelas dan AI ranking, dan skenario adversarial.
+Aplikasi web punya dua tab: data dan jadwal CSP & pilih kelas dan AI ranking
 Tombol "Generate ulang jadwal CSP" membuat jadwal tetap yang baru.
 
 ## Isi file
@@ -75,7 +75,6 @@ Tombol "Generate ulang jadwal CSP" membuat jadwal tetap yang baru.
 | `models.py` | Struktur data (Section, Lecturer, Room, Slot, Assignment, Problem) |
 | `ranking.py` | Skor dan urutan jadwal untuk dataset lama |
 | `compare.py`, `benchmark.py` | Perbandingan Backtracking biasa, +MRV, +Forward Checking, dan +MRV+FC |
-| `adversarial.py` | Skenario dua mahasiswa berebut kelas (minimax, alpha-beta, greedy) |
 | `main.py`, `data.py`, `dataset*.json` | Alur CLI dan dataset contoh yang lebih kecil, dipakai untuk pengujian dan perbandingan |
 | `gen_dataset.py` | Pembuat dataset acak untuk benchmark |
 | `tests_scenarios.py` | Skenario uji |

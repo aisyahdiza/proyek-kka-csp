@@ -81,38 +81,6 @@ def test_solver_tidak_menaruh_kelompok_sama_di_slot_sama():
                 if a < b and problem.sections[a].group == problem.sections[b].group:
                     assert sch[a].slot_id != sch[b].slot_id
 
-
-def _game_demo(max_pick=3, kuota=1):
-    from adversarial import jalankan_skenario
-    from solver import solve_one
-    import random
-    problem = load_problem()
-    jadwal = solve_one(problem, random.Random(0))
-    return jalankan_skenario(jadwal, 1, 2, max_pick, kuota)
-
-
-def test_alphabeta_nilai_sama_dengan_minimax_tapi_lebih_sedikit_node():
-    _, h = _game_demo()
-    assert h["nilai_sama"]
-    assert h["node_alphabeta"] < h["node_minimax"]
-
-
-def test_minimax_menjamin_hasil_minimal_nilai_optimal():
-    _, h = _game_demo()
-    v = h["nilai_optimal"]
-    assert h["kombinasi"][("minimax", "greedy")]["nilai"] >= v
-    assert h["kombinasi"][("greedy", "minimax")]["nilai"] <= v
-
-
-def test_war_adversarial_aturan_pilih_kelas():
-    game, _ = _game_demo(max_pick=2)
-    state = game.initial()
-    langkah, state = game.successors(state)[0]
-    assert langkah not in game.legal(state, 0)                    
-    assert langkah not in game.legal(state, 1)                    
-    for sid in game.legal(state, 1):                              
-        assert game.slot[sid] not in {game.slot[s] for s in state[1]}
-
 def _krs(**kw):
     from krs import KRS, DATASET_KRS, muat_problem_krs
     from main import run_pipeline

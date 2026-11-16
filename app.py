@@ -1,16 +1,15 @@
 import streamlit as st
 
-from adversarial import jalankan_skenario
 from kampus import (DOSEN, MAKS_KELAS_PER_HARI, MATKUL, buat_jadwal_tetap, buat_problem,
                     tabel_jadwal)
 from krs import KRS
 from models import HARI
 
-MAKS_PILIHAN = 3          # mahasiswa boleh memilih maksimal 3 kelas, sisanya dipilihkan AI
+MAKS_PILIHAN = 3 
 AI = "(auto fill)"
 
 st.set_page_config(page_title="Jadwal Kuliah CSP", layout="wide")
-st.title("My ITS Scheduler")
+st.title("MyITSClassSched")
 st.caption("CSP (backtracking + MRV + forward checking) menyusun jadwal tetap seluruh kelas, "
            "lalu AI ranking melengkapi pilihan mahasiswa menjadi satu jadwal utuh tanpa bentrok.")
 
@@ -22,6 +21,8 @@ if "problem" not in st.session_state:
 if st.button("Generate ulang jadwal CSP"):
     st.session_state.seed += 100
     st.session_state.jadwal = buat_jadwal_tetap(st.session_state.problem, st.session_state.seed)
+    for kode, _, _ in MATKUL:
+        st.session_state.pop(f"pilih_{kode}", None)
     st.rerun()
 
 problem = st.session_state.problem
@@ -32,8 +33,7 @@ if not jadwal:
     st.stop()
 
 krs = KRS(jadwal, problem)
-tab_data, tab_pilih, tab_adv = st.tabs(["Data dan jadwal CSP", "Pilih kelas dan AI ranking",
-                                        "Skenario adversarial"])
+tab_data, tab_pilih = st.tabs(["Data dan jadwal CSP", "Pilih kelas dan AI ranking"])
 
 with tab_data:
     st.subheader("Data masukan")
@@ -98,25 +98,3 @@ with tab_pilih:
                                   "Dipilih oleh": "kamu" if code in picks else "AI"})
                 st.dataframe(baris, use_container_width=True, hide_index=True)
                 st.info(krs.jelaskan(r))
-
-with tab_adv:
-    st.subheader("Dua mahasiswa berebut kelas (minimax + alpha-beta)")
-    st.write("Mahasiswa A dan B bergiliran memilih kelas dari jadwal tetap hasil CSP. "
-             "Kuota kelas terbatas, jadi kelas yang diambil A bisa hilang untuk B. "
-             "Nilai akhir = total kesukaan A dikurangi total kesukaan B.")
-    c1, c2, c3 = st.columns(3)
-    max_pick = c1.slider("Kelas per mahasiswa", 1, 4, 3)
-    kuota = c2.slider("Kuota tiap kelas", 1, 2, 1)
-    seed = c3.number_input("Seed preferensi", 0, 999, 1)
-
-    if st.button("Jalankan skenario"):
-        _, h = jalankan_skenario(jadwal, int(seed), int(seed) + 1, max_pick, kuota, problem)
-        st.metric("Nilai permainan optimal (A - B)", h["nilai_optimal"])
-        m1, m2 = st.columns(2)
-        m1.metric("Node minimax", h["node_minimax"])
-        m2.metric("Node alpha-beta", h["node_alphabeta"])
-        baris = [{"Strategi A": sa, "Strategi B": sb, "Nilai (A - B)": r["nilai"],
-                  "Kelas A": ", ".join(r["kelas_a"]), "Kelas B": ", ".join(r["kelas_b"])}
-                 for (sa, sb), r in h["kombinasi"].items()]
-        st.table(baris)
-        st.caption("Minimax menjamin hasil terburuk terbaik; greedy cepat tetapi tidak melihat langkah lawan.")

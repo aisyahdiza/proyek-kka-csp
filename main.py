@@ -60,10 +60,5 @@ if __name__ == "__main__":
         masalah = check_student_selection(pilihan, best, problem)
         print("Pilihan valid" if not masalah else "\n".join(masalah))
 
-        from adversarial import jalankan_skenario
-        _, h = jalankan_skenario(best)
-        print("\n--- Skenario adversarial: dua mahasiswa berebut kelas ---")
-        print(f"Nilai optimal (A - B): {h['nilai_optimal']}")
-        print(f"Node minimax: {h['node_minimax']}, node alpha-beta: {h['node_alphabeta']}")
         for (sa, sb), r in h["kombinasi"].items():
             print(f"A={sa:8} B={sb:8} -> nilai {r['nilai']:>3} | A {r['kelas_a']} | B {r['kelas_b']}")

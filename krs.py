@@ -22,6 +22,14 @@ LABEL = {
     "hari_kosong": "hari yang diminta kosong terpenuhi",
 }
 
+LABEL_LEMAH = {
+    "dosen_favorit": "sedikit kelas diajar dosen favorit",
+    "jeda_sedikit": "banyak jeda kosong antar kelas",
+    "hari_sedikit": "kuliah tersebar di banyak hari",
+    "hindari_sore": "ada kelas sore",
+    "hari_kosong": "hari yang diminta masih terisi kelas",
+}
+
 
 def muat_problem_krs():
     return load_problem(DATASET_KRS)
@@ -105,6 +113,8 @@ class KRS:
                 return
             code = min(doms, key=lambda c: len(doms[c])) if use_fc else next(iter(doms))
             for sid in doms[code]:
+                if limit and len(solutions) >= limit:
+                    return
                 if not use_fc: 
                     stats["checks"] += 1
                     if self._cek(sid, assign) is not None:
@@ -174,7 +184,7 @@ class KRS:
             sl = slots[self.slot(s)]
             per_hari.setdefault(sl.day, []).append((sl.start, sl.end))
 
-        jeda = 0  # total jam kosong di antara kelas pada hari yang sama
+        jeda = 0
         for jam in per_hari.values():
             jam.sort()
             jeda += sum(max(0, b[0] - a[1]) for a, b in zip(jam, jam[1:]))
@@ -212,8 +222,10 @@ class KRS:
         komp = rekom["rincian"]
         terbaik = max(komp, key=komp.get)
         terlemah = min(komp, key=komp.get)
-        return (f"Skor {rekom['skor']}/100. Kelebihan: {LABEL[terbaik]}. "
-                f"Titik terlemah: {LABEL[terlemah].replace('kelasnya ', '')} ({komp[terlemah]:.0%}).")
+        kelebihan = f"Skor {rekom['skor']}/100. Kelebihan: {LABEL[terbaik]} ({komp[terbaik]:.0%} terpenuhi)."
+        if komp[terlemah] >= 1:
+            return f"{kelebihan} Semua kriteria terpenuhi penuh, tidak ada kekurangan berarti."
+        return f"{kelebihan} Kekurangan: {LABEL_LEMAH[terlemah]} (hanya {komp[terlemah]:.0%} terpenuhi)."
 
     def tampilkan(self, pilihan):
         slots = self.problem.slots
